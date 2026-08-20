@@ -1,0 +1,261 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Heading ─────────────────────────────────────────── */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: .74rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.countBar {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid #cceee9;
+  font-size: .68rem;
+  color: var(--accent-strong);
+}
+.countBar strong {
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+/* ── Groups ──────────────────────────────────────────── */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.groupTitle {
+  font-family: var(--font-display);
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.groupCount {
+  font-family: var(--font-mono);
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--bg-border);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.groupHint {
+  font-size: .7rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+
+/* ── Cards ───────────────────────────────────────────── */
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast);
+}
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 6px 20px var(--accent-dim);
+  transform: translateY(-1px);
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--bg-sunken);
+  font-size: .92rem;
+  line-height: 1;
+}
+
+.cardHeadText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pathRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.method {
+  font-family: var(--font-mono);
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid #cceee9;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.path {
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.sseTag {
+  font-family: var(--font-mono);
+  font-size: .56rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: #2c6fd1;
+  background: var(--accent-sky-soft);
+  border: 1px solid #cfe1fb;
+}
+
+.cardTitle {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: .01em;
+}
+
+.desc {
+  font-size: .73rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* ── Meta row: source file + MCP tool name ───────────── */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.file {
+  font-family: var(--font-mono);
+  font-size: .63rem;
+  color: var(--text-muted);
+  background: var(--bg-sunken);
+  border: 1px solid var(--bg-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  word-break: break-all;
+}
+
+.mcpTag,
+.paramTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: .61rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.mcpTag {
+  background: var(--accent-violet-soft);
+  border: 1px solid #ddd8fc;
+}
+
+.mcpTag code {
+  font-family: var(--font-mono);
+  font-size: .63rem;
+  font-weight: 700;
+  color: #6a58e0;
+}
+
+.paramTag {
+  background: var(--accent-amber-soft);
+  border: 1px solid #f7e2c2;
+}
+
+.paramTag code {
+  font-family: var(--font-mono);
+  font-size: .63rem;
+  font-weight: 700;
+  color: #b57419;
+  word-break: break-all;
+}
+
+/* ── Footnote ────────────────────────────────────────── */
+.note {
+  margin-top: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--bg-border-strong);
+  background: var(--bg-elevated);
+  font-size: .69rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+

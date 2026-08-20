@@ -1,0 +1,279 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Headings ────────────────────────────────────────── */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subTitle {
+  font-family: var(--font-display);
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: .74rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── Config code block ───────────────────────────────── */
+.codeCard {
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: var(--shadow-xs);
+}
+
+.codeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.codeBarLabel {
+  font-family: var(--font-mono);
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-secondary);
+}
+
+.copyBtn {
+  font-family: var(--font-sans);
+  font-size: .65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #ffffff;
+  border: 1px solid var(--bg-border);
+  border-radius: 6px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: color var(--transition-fast),
+              border-color var(--transition-fast),
+              background var(--transition-fast);
+}
+.copyBtn:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.code {
+  margin: 0;
+  padding: 13px 15px;
+  background: var(--bg-sunken);
+  font-family: var(--font-mono);
+  font-size: .69rem;
+  line-height: 1.75;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ── Server card ─────────────────────────────────────── */
+.serverCard {
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.serverHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+}
+
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast),
+              color var(--transition-fast),
+              border-color var(--transition-fast);
+}
+.chevron:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.chevron svg {
+  transform: rotate(-90deg);
+  transition: transform var(--transition-med);
+}
+.chevronOpen {
+  transform: rotate(0deg) !important;
+}
+
+.serverMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.serverTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.serverName {
+  font-family: var(--font-mono);
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: .01em;
+}
+
+.scopeTag {
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  color: #ffffff;
+  background: var(--text-secondary);
+  border-radius: 5px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+  flex-shrink: 0;
+  animation: statusPulse 2.2s ease-in-out infinite;
+}
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .5; }
+}
+
+.serverCount {
+  font-family: var(--font-mono);
+  font-size: .67rem;
+  color: var(--text-muted);
+  letter-spacing: .02em;
+}
+
+.authTag {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid #cceee9;
+  border-radius: 999px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+/* ── Tool chips ──────────────────────────────────────── */
+.chipList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 14px 13px 47px;
+}
+
+.chipItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chipRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--bg-border);
+  border-radius: 8px;
+  padding: 4px 11px;
+}
+
+.autoTag {
+  font-family: var(--font-sans);
+  font-size: .56rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid #cceee9;
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.chipRoute {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: .62rem;
+  color: var(--text-muted);
+  letter-spacing: .02em;
+}
+
+.chipDesc {
+  font-size: .71rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── Footnote ────────────────────────────────────────── */
+.note {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--bg-border-strong);
+  background: var(--bg-elevated);
+  font-size: .69rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+

@@ -12,6 +12,6 @@
     "sandbox": {
       "timeout": 300
     },
-    "mcp": { "enabled": true }
+    "mcp": { "enabled": true, "auth": "passthrough" }
   }
 }

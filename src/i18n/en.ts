@@ -71,7 +71,8 @@ const en = {
 
   // MCP section
   "mcp.title": "MCP Config",
-  "mcp.subtitle": "The Agent MCP Servers configuration for this deployment, used to connect external Model Context Protocol clients.",
+  "mcp.subtitle": "The Agent MCP Servers configuration for this deployment, used to connect external Model Context Protocol clients. The URL below is derived from the domain you are viewing, so it is ready to copy as-is.",
+  "mcp.originHint": "Taken from the current browser address — the real domain of this deployment",
   "mcp.copy": "Copy",
   "mcp.copied": "Copied",
   "mcp.expand": "Expand tool list",

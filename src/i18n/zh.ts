@@ -71,7 +71,8 @@ const zh = {
 
   // MCP section
   "mcp.title": "MCP 配置",
-  "mcp.subtitle": "当前部署的 Agent MCP Servers 配置，用于连接外部模型上下文服务。",
+  "mcp.subtitle": "当前部署的 Agent MCP Servers 配置，用于连接外部模型上下文服务。下方地址根据当前访问的域名自动生成，可直接复制使用。",
+  "mcp.originHint": "取自当前浏览器地址，即本次部署的实际访问域名",
   "mcp.copy": "复制",
   "mcp.copied": "已复制",
   "mcp.expand": "展开工具列表",

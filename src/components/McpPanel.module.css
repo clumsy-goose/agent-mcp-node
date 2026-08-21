@@ -58,6 +58,23 @@
   color: var(--text-secondary);
 }
 
+/* Live origin badge — shows which deployment the snippet points at. */
+.originTag {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: .6rem;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid #cceee9;
+  border-radius: 999px;
+  padding: 2px 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .copyBtn {
   font-family: var(--font-sans);
   font-size: .65rem;

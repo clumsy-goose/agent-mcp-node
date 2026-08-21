@@ -21,18 +21,25 @@ import styles from './McpPanel.module.css';
  * that auto-registration works: none of them contain MCP-specific code.
  */
 const MCP_SERVER_NAME = 'makers-agent';
-const MCP_ENDPOINT = 'https://mcp-pre.corbinlin.cn/mcp';
 
-const MCP_CONFIG = `{
-  "mcpServers": {
-    "${MCP_SERVER_NAME}": {
-      "url": "${MCP_ENDPOINT}",
-      "headers": {
-        "Authorization": "Bearer <your-user-token>"
-      }
-    }
+/**
+ * Origin of the page currently being viewed.
+ *
+ * The agent routes and the `/mcp` endpoint are served by the very same
+ * deployment as this SPA, so the browser's own origin is always the correct
+ * base URL — whether that is a preview domain, a custom domain, or
+ * `localhost:5173` during `vite dev`. Deriving it at runtime keeps the snippets
+ * copy-pasteable without hardcoding one environment's hostname.
+ *
+ * Falls back to a placeholder for non-browser contexts (SSR / tests), which
+ * also keeps this module safe to import outside the DOM.
+ */
+function getOrigin(): string {
+  if (typeof window === 'undefined' || !window.location?.origin) {
+    return 'https://<your-domain>';
   }
-}`;
+  return window.location.origin;
+}
 
 interface McpTool {
   name: string;
@@ -51,48 +58,71 @@ const MCP_TOOLS: McpTool[] = [
   { name: 'text_statistics',    route: 'agents/text_statistics',    autoRegistered: true,  descKey: 'mcp.agentTool.statistics' },
 ];
 
-/** Sample calls for checking auto-registration against a live deployment. */
-const VERIFY_SNIPPET = `# All requests need a makers-conversation-id header (6-36 chars, [0-9a-zA-Z-_.])
+export default function McpPanel() {
+  const { t } = useT();
+  const [expanded, setExpanded] = useState(true);
+  const [copied, setCopied] = useState<'config' | 'verify' | null>(null);
+
+  const origin = useMemo(getOrigin, []);
+  const mcpEndpoint = `${origin}/mcp`;
+
+  const mcpConfig = useMemo(
+    () => `{
+  "mcpServers": {
+    "${MCP_SERVER_NAME}": {
+      "url": "${mcpEndpoint}",
+      "headers": {
+        "Authorization": "Bearer <your-user-token>"
+      }
+    }
+  }
+}`,
+    [mcpEndpoint],
+  );
+
+  /** Sample calls for checking auto-registration against this deployment. */
+  const verifySnippet = useMemo(
+    () => `# All requests need a makers-conversation-id header (6-36 chars, [0-9a-zA-Z-_.])
 CID="makers-conversation-id: verify-001"
 
 # 1. List tools — all 6 routes appear with no MCP-specific code
-curl -sX POST "${MCP_ENDPOINT}" \\
+curl -sX POST "${mcpEndpoint}" \\
   -H "Content-Type: application/json" \\
   -H "Accept: application/json, text/event-stream" -H "$CID" \\
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
 # 2. Call over MCP. The runtime advertises the same fixed schema
 #    { message, session_id } for every route, so pass JSON inside message.
-curl -sX POST "${MCP_ENDPOINT}" \\
+curl -sX POST "${mcpEndpoint}" \\
   -H "Content-Type: application/json" \\
   -H "Accept: application/json, text/event-stream" -H "$CID" \\
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_weather",
        "arguments":{"message":"{\\"city\\":\\"Beijing\\"}"}}}'
 
 # 3. Or call the route directly with its real structured arguments
-curl -sX POST "https://<your-domain>/get_weather" \\
+curl -sX POST "${origin}/get_weather" \\
   -H "Content-Type: application/json" -H "$CID" \\
-  -d '{"city":"Beijing"}'`;
-
-export default function McpPanel() {
-  const { t } = useT();
-  const [expanded, setExpanded] = useState(true);
-  const [copied, setCopied] = useState<'config' | 'verify' | null>(null);
+  -d '{"city":"Beijing"}'`,
+    [origin, mcpEndpoint],
+  );
 
   const toolCountLabel = useMemo(
     () => `${MCP_TOOLS.length} tools · 0 prompts`,
     [],
   );
 
-  const handleCopy = useCallback(async (kind: 'config' | 'verify') => {
-    try {
-      await navigator.clipboard.writeText(kind === 'config' ? MCP_CONFIG : VERIFY_SNIPPET);
-      setCopied(kind);
-      setTimeout(() => setCopied(null), 1600);
-    } catch {
-      setCopied(null);
-    }
-  }, []);
+  const handleCopy = useCallback(
+    async (kind: 'config' | 'verify') => {
+      try {
+        await navigator.clipboard.writeText(kind === 'config' ? mcpConfig : verifySnippet);
+        setCopied(kind);
+        setTimeout(() => setCopied(null), 1600);
+      } catch {
+        setCopied(null);
+      }
+    },
+    [mcpConfig, verifySnippet],
+  );
 
   return (
     <section className={styles.section} aria-labelledby="mcp-heading">
@@ -105,6 +135,9 @@ export default function McpPanel() {
       <div className={styles.codeCard}>
         <div className={styles.codeBar}>
           <span className={styles.codeBarLabel}>mcp.json</span>
+          <span className={styles.originTag} title={t('mcp.originHint')}>
+            {origin}
+          </span>
           <button
             type="button"
             className={styles.copyBtn}
@@ -115,7 +148,7 @@ export default function McpPanel() {
           </button>
         </div>
         <pre className={styles.code}>
-          <code>{MCP_CONFIG}</code>
+          <code>{mcpConfig}</code>
         </pre>
       </div>
 
@@ -195,7 +228,7 @@ export default function McpPanel() {
           </button>
         </div>
         <pre className={styles.code}>
-          <code>{VERIFY_SNIPPET}</code>
+          <code>{verifySnippet}</code>
         </pre>
       </div>
 

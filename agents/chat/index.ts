@@ -13,6 +13,11 @@
  *   context.request.signal  — AbortSignal, set when /chat/stop is called
  *   conversation_id — conversation ID
  *   context.runId           — current run ID
+ *
+ * @mcp_description Chat with the AI assistant. Supports custom tool calls, streaming responses and session memory.
+ * @mcp_parameters
+ *   message: { "type": "string", "description": "The user's message to the assistant", "required": true }
+ *   user_id: { "type": "string", "description": "Optional user identifier, used to index conversation history per user" }
  */
 
 import OpenAI from 'openai';

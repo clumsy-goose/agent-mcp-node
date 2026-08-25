@@ -11,6 +11,10 @@
  *
  * The behaviour itself lives in `agents/_tool-core.ts` and is shared with the
  * in-agent tool used by /chat, so the two can never diverge.
+ *
+ * @mcp_description Get the current weather for a specified city.
+ * @mcp_parameters
+ *   city: { "type": "string", "description": "The city to get weather for", "required": true }
  */
 
 import { createToolRoute } from '../_tool-route';

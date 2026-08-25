@@ -7,6 +7,10 @@
  * (see `agents.mcp` in edgeone.json).
  *
  * Behaviour is shared with the in-agent tool via `agents/_tool-core.ts`.
+ *
+ * @mcp_description Analyze text and return statistics like character count and word count.
+ * @mcp_parameters
+ *   text: { "type": "string", "description": "The text to analyze", "required": true }
  */
 
 import { createToolRoute } from '../_tool-route';

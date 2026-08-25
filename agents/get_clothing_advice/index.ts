@@ -7,6 +7,10 @@
  * `get_clothing_advice` by the runtime (see `agents.mcp` in edgeone.json).
  *
  * Behaviour is shared with the in-agent tool via `agents/_tool-core.ts`.
+ *
+ * @mcp_description Give clothing advice based on weather conditions.
+ * @mcp_parameters
+ *   weather: { "type": "string", "description": "The weather description (JSON or plain text)", "required": true }
  */
 
 import { createToolRoute } from '../_tool-route';

@@ -83,6 +83,86 @@ function formatExpiry(exp: unknown): { text: string; expired: boolean } | null {
   return { text: new Date(ms).toLocaleString(), expired };
 }
 
+/**
+ * 私钥来源：构建时由 Vite 注入的 `VITE_MAKERS_JWT_PRIVATE_KEY`。
+ * 注意：浏览器端 env 会打进产物，仅适合本地测试；生产前端绝不能放私钥。
+ */
+const ENV_PRIVATE_KEY =
+  (((import.meta as any).env?.VITE_MAKERS_JWT_PRIVATE_KEY as string | undefined) ?? '').trim();
+
+// ── JWT 本地签发（Web Crypto，零依赖）──────────────────────────────────────
+// 前端不验签，但「签发」本身也只需 web 标准 API。RS256 用 RSASSA-PKCS1-v1_5，
+// HS256 用 HMAC —— 与 edgeone.json 的 agents.auth.algorithm 对应。
+
+function utf8ToB64url(s: string): string {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function bytesToB64url(bytes: Uint8Array): string {
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** PEM → bytes。剥离头尾与空白，兼容 \n 与单行。 */
+function pemToBytes(pem: string): Uint8Array {
+  const b64 = pem
+    .replace(/-----BEGIN[^-]*-----/, '')
+    .replace(/-----END[^-]*-----/, '')
+    .replace(/[\s\r\n]/g, '');
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function signJwt(opts: {
+  privateKey: string;
+  alg: 'RS256' | 'HS256';
+  claims: Record<string, unknown>;
+}): Promise<string> {
+  const headerB64 = utf8ToB64url(JSON.stringify({ alg: opts.alg, typ: 'JWT' }));
+  const payloadB64 = utf8ToB64url(JSON.stringify(opts.claims));
+  const signingInput = `${headerB64}.${payloadB64}`;
+  const data = new TextEncoder().encode(signingInput);
+
+  let signature: ArrayBuffer;
+  if (opts.alg === 'RS256') {
+    // Web Crypto 仅支持 PKCS8（-----BEGIN PRIVATE KEY-----）。
+    const key = await crypto.subtle.importKey(
+      'pkcs8',
+      pemToBytes(opts.privateKey).buffer as ArrayBuffer,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+    signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, data);
+  } else {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(opts.privateKey),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+    signature = await crypto.subtle.sign('HMAC', key, data);
+  }
+  return `${signingInput}.${bytesToB64url(new Uint8Array(signature))}`;
+}
+
+// ── datetime-local 与 unix 秒 互转（本地时区）──────────────────────────────
+function toDatetimeLocal(d: Date): string {
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0, 16);
+}
+
+function fromDatetimeLocal(v: string): number {
+  return Math.floor(new Date(v).getTime() / 1000);
+}
+
 export default function AuthPanel({ conversationId }: Props) {
   const { t } = useT();
   const local = isLocalHost();
@@ -90,6 +170,13 @@ export default function AuthPanel({ conversationId }: Props) {
   const [token, setToken] = useState(() => getAuthToken());
   const [saved, setSaved] = useState(() => getAuthToken());
   const [probe, setProbe] = useState<ProbeState | null>(null);
+
+  // ── JWT 生成器状态 ──
+  const [genAlg, setGenAlg] = useState<'RS256' | 'HS256'>('RS256');
+  const [genKey, setGenKey] = useState(() => ENV_PRIVATE_KEY);
+  const [genSub, setGenSub] = useState('corbinlin');
+  const [genExp, setGenExp] = useState(() => toDatetimeLocal(new Date(Date.now() + 3600_000)));
+  const [genError, setGenError] = useState<string | null>(null);
 
   // token 变更后清掉旧探测结果，避免读者把上一次的结论套到新 token 上。
   useEffect(() => {
@@ -106,6 +193,34 @@ export default function AuthPanel({ conversationId }: Props) {
     setToken('');
     setSaved('');
   }, []);
+
+  // 用私钥本地签发 JWT，并直接填入上方 token 框（保留粘贴能力）。
+  const handleGenerate = useCallback(async () => {
+    setGenError(null);
+    try {
+      const key = genKey.trim();
+      if (!key) throw new Error(t('auth.gen.errorEmptyKey'));
+      const sub = genSub.trim();
+      if (!sub) throw new Error(t('auth.gen.errorEmptySub'));
+
+      const now = Math.floor(Date.now() / 1000);
+      const exp = fromDatetimeLocal(genExp);
+      if (!Number.isFinite(exp) || exp <= now) {
+        throw new Error(t('auth.gen.errorExp'));
+      }
+
+      const jwt = await signJwt({
+        privateKey: key,
+        alg: genAlg,
+        claims: { sub, iat: now, nbf: now, exp },
+      });
+      setToken(jwt);
+      setAuthToken(jwt);
+      setSaved(jwt);
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : String(e));
+    }
+  }, [genKey, genSub, genExp, genAlg, t]);
 
   const runProbe = useCallback(async (kind: ProbeKind) => {
     setProbe({ kind, loading: true, response: null });
@@ -205,6 +320,88 @@ export default function AuthPanel({ conversationId }: Props) {
         )}
         {saved && !payload && (
           <p className={styles.parseWarn}>{t('auth.token.unparsable')}</p>
+        )}
+      </div>
+
+      {/* ── JWT 生成器 ── */}
+      <div className={styles.block}>
+        <div className={styles.blockHead}>
+          <h3 className={styles.blockTitle}>{t('auth.gen.title')}</h3>
+          <code className={styles.routeTag}>RS256 / HS256</code>
+        </div>
+        <p className={styles.blockHint}>{t('auth.gen.hint')}</p>
+
+        <div className={styles.genForm}>
+          <label className={styles.genField}>
+            <span className={styles.genLabel}>{t('auth.gen.alg')}</span>
+            <select
+              className={styles.genInput}
+              value={genAlg}
+              onChange={e => setGenAlg(e.target.value as 'RS256' | 'HS256')}
+              aria-label={t('auth.gen.alg')}
+            >
+              <option value="RS256">RS256</option>
+              <option value="HS256">HS256</option>
+            </select>
+          </label>
+
+          <label className={styles.genField}>
+            <span className={styles.genLabel}>{t('auth.gen.key')}</span>
+            <textarea
+              className={styles.tokenInput}
+              value={genKey}
+              onChange={e => setGenKey(e.target.value)}
+              placeholder={t('auth.gen.keyPlaceholder')}
+              spellCheck={false}
+              rows={4}
+              aria-label={t('auth.gen.key')}
+            />
+          </label>
+          {ENV_PRIVATE_KEY && (
+            <p className={styles.genEnvNote}>{t('auth.gen.keyFromEnv')}</p>
+          )}
+          {genAlg === 'RS256' && (
+            <p className={styles.blockHint}>{t('auth.gen.pkcs8Hint')}</p>
+          )}
+
+          <label className={styles.genField}>
+            <span className={styles.genLabel}>{t('auth.gen.sub')}</span>
+            <input
+              className={styles.genInput}
+              value={genSub}
+              onChange={e => setGenSub(e.target.value)}
+              placeholder="corbinlin"
+              aria-label={t('auth.gen.sub')}
+            />
+          </label>
+
+          <label className={styles.genField}>
+            <span className={styles.genLabel}>{t('auth.gen.exp')}</span>
+            <input
+              className={styles.genInput}
+              type="datetime-local"
+              value={genExp}
+              onChange={e => setGenExp(e.target.value)}
+              aria-label={t('auth.gen.exp')}
+            />
+          </label>
+        </div>
+
+        <div className={styles.btnRow}>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={handleGenerate}
+            disabled={probe?.loading}
+          >
+            {t('auth.gen.generate')}
+          </button>
+        </div>
+
+        {genError && (
+          <p className={styles.genError}>
+            {t('auth.gen.error')}{genError}
+          </p>
         )}
       </div>
 

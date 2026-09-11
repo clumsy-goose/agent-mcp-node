@@ -283,6 +283,71 @@
   color: #b57419;
 }
 
+/* ── JWT generator form ─────────────────────────────── */
+.genForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.genField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.genLabel {
+  font-family: var(--font-mono);
+  font-size: .62rem;
+  letter-spacing: .02em;
+  color: var(--text-muted);
+}
+
+.genInput {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: .74rem;
+  color: var(--text-primary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-sm);
+  padding: 7px 9px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* datetime-local 在多数浏览器用等宽数字更对齐 */
+.genInput[type="datetime-local"] {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+}
+
+.genInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.genEnvNote {
+  font-size: .66rem;
+  line-height: 1.55;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid #cceee9;
+  border-radius: var(--radius-sm);
+  padding: 6px 9px;
+}
+
+.genError {
+  font-size: .69rem;
+  line-height: 1.6;
+  color: #c0392b;
+  background: #fdf2f0;
+  border: 1px solid #f5d3cd;
+  border-radius: var(--radius-sm);
+  padding: 7px 9px;
+}
+
 .valOn,
 .valOff {
   font-family: var(--font-mono);

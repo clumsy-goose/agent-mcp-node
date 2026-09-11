@@ -12,6 +12,12 @@
     "sandbox": {
       "timeout": 300
     },
-    "mcp": { "enabled": true, "auth": "passthrough" }
+    "auth": {
+      "type": "jwt",
+      "algorithm": "RS256",
+      "verificationKeys": [
+        "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwT3xDHWk5fZDEZLWohs6\nB8RSZRl+dWiWRml3toZ++4C0jRAnQlllUgmYypmcB1IQcCCZUIBiEC115pPF6Gem\njOR9S8xXli5Rj+C23FdIpRyzkZt9fuoCb9750qT74HpJwyXLCFQJRlpXpDXvSKTe\nzqEHkfPCuDznFRHlnyUhl3ZMHXR9Lp3tOWm6lNVuJeZ124WOcjoK9P6lVHeQA3CZ\nMYEJMG5vgivtBy0IKdGU/oN/st47SVMoThET9RWbNAsSZj44cNaKYkG/PnmORi6f\n8Hx96f1rao+dyP/sfbm3krqOBJ0Fy4RIUwFVxP4MFDSQYsFrWNIJMHIuJS6YPQ5H\n6QIDAQAB\n-----END PUBLIC KEY-----\n"
+      ]
+    }
   }
 }

@@ -4,6 +4,7 @@
  * Route mapping (file → route):
  *   agents/chat/index.ts                         → POST /chat                  Main chat endpoint (SSE)
  *   agents/stop/index.ts                         → POST /stop                  Abort the active agent run
+ *   agents/whoami/index.ts                       → POST /whoami                Auth probe (SSE)
  *   cloud-functions/history/index.ts             → POST /history               Get conversation history
  *   cloud-functions/conversations/index.ts       → POST /conversations         List conversations for a user
  *   cloud-functions/clear-history/index.ts       → POST /clear-history         Clear messages of one conversation
@@ -21,11 +22,165 @@ import type {
 export const API = {
   chat: '/chat',
   chatStop: '/stop',                        // Abort the active agent run
+  whoami: '/whoami',                        // Auth probe — echoes the platform identity
   history: '/history',                      // Get conversation history
   clearHistory: '/clear-history',           // Clear messages in a conversation
   conversations: '/conversations',          // List conversations for a user
   deleteConversation: '/delete-conversation', // Permanently delete a conversation
 } as const;
+
+// ── 鉴权（agents.auth）─────────────────────────────────────────────────
+//
+// `edgeone.json` 配了 `agents.auth` 后，`agents/*` 路由由中控（边缘层）验签 JWT，
+// 验通后注入身份，agent runtime 再映射成业务可见的 `makers-user-id` 请求头。
+// 前端要做的只有一件事：把 JWT 放进 `Authorization: Bearer <token>`。
+//
+// 真实产品里 token 由认证服务在用户登录后下发；这个模板没有登录流程，
+// 所以提供一个手工粘贴入口（见 AuthPanel），存在 localStorage 里。
+
+const AUTH_TOKEN_STORAGE_KEY = 'eo-jwt-token';
+
+/** 读取当前保存的 JWT；未设置时返回空串。 */
+export function getAuthToken(): string {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/** 保存 JWT；传空串即清除。 */
+export function setAuthToken(token: string): void {
+  try {
+    const trimmed = token.trim();
+    if (trimmed) localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, trimmed);
+    else localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  } catch {
+    /* 隐私模式下 localStorage 可能不可用，忽略 */
+  }
+}
+
+/**
+ * 构造请求头，已保存 token 时自动附加 Authorization。
+ *
+ * 注意：绝不在这里塞 `makers-user-id` —— 那是平台注入的身份字段，
+ * 客户端传值会被 agent runtime 无条件丢弃（防伪造）。
+ */
+export function withAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
+  const token = getAuthToken();
+  if (token) headers['authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
+/** /whoami 探针的返回结构，与 agents/whoami/index.ts 的 payload 对应。 */
+export interface WhoamiResult {
+  authenticated: boolean;
+  userId: string | null;
+  conversationId: string | null;
+  runId: string | null;
+  /** 内部信道名是否泄漏到业务侧；正常必须为 null。 */
+  leakedInnerHeader: string | null;
+  authorizationPresent: boolean;
+  requestId: string | null;
+  echo?: string;
+}
+
+/** 探针响应可能是 SSE 正常返回，也可能被中控挡在 SCF 之前（非 200）。 */
+export interface WhoamiResponse {
+  status: number;
+  ok: boolean;
+  result: WhoamiResult | null;
+  /** 解析失败或被拒时的原始响应，便于排查。 */
+  raw: string;
+}
+
+/**
+ * 从 agent 私有 SSE 文本里抽出 text_delta 的 delta 并拼接。
+ *
+ * /whoami 走 SSE 而非 JSON，是为了让同一个路由既能被 HTTP 直连调用、
+ * 也能作为 MCP tool 被调用（MCP adapter 只聚合 text_delta 帧）。
+ */
+function extractSseText(raw: string): string {
+  let text = '';
+  for (const block of raw.split(/\n\n/)) {
+    if (!block.trim()) continue;
+    let eventName = '';
+    const dataLines: string[] = [];
+    for (const line of block.split(/\n/)) {
+      if (line.startsWith('event:')) eventName = line.slice(6).trim();
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+    }
+    if (eventName !== 'text_delta' || dataLines.length === 0) continue;
+    try {
+      const parsed = JSON.parse(dataLines.join('\n'));
+      if (typeof parsed?.delta === 'string') text += parsed.delta;
+    } catch {
+      /* 非 JSON 帧跳过 */
+    }
+  }
+  return text;
+}
+
+/**
+ * 调用 /whoami 探针，返回 runtime 解析出的平台身份。
+ *
+ * `identityHeader` 仅用于本地 dev：dev 模式没有中控，没人验签 JWT，
+ * 只能直接注入中控的「输出」`edge-inner-user-id` 来模拟已鉴权状态。
+ * 线上传这个头没用（中控会无条件重写），线上靠 Authorization。
+ *
+ * `forgedUserIdHeader` 用于**安全验证**：直接伪造业务可见的 `makers-user-id`。
+ * agent runtime 必须无条件丢弃它 —— 若探针回显了这个值，说明存在可被利用的
+ * 身份伪造路径（任何人都能冒充任意用户）。
+ *
+ * `conversationId` 与 /chat、/stop 同一来源：由调用方（App.tsx）传入当前活跃会话 ID，
+ * 它由 getOrCreateConversationId() 生成并持久化在 localStorage。runtime 不会自动
+ * 生成会话 ID，缺失时直接返回 400 AGENT_CONVERSATION_ID_REQUIRED。
+ */
+export async function fetchWhoami(
+  options: {
+    identityHeader?: string;
+    forgedUserIdHeader?: string;
+    echo?: string;
+    conversationId?: string;
+  } = {},
+): Promise<WhoamiResponse> {
+  const extra: Record<string, string> = {};
+  if (options.conversationId) {
+    extra['makers-conversation-id'] = options.conversationId;
+  }
+  if (options.identityHeader) {
+    extra['edge-inner-user-id'] = options.identityHeader;
+  }
+  if (options.forgedUserIdHeader) {
+    extra['makers-user-id'] = options.forgedUserIdHeader;
+  }
+
+  try {
+    const res = await fetch(API.whoami, {
+      method: 'POST',
+      headers: withAuthHeaders(extra),
+      body: JSON.stringify(options.echo ? { echo: options.echo } : {}),
+    });
+    const raw = await res.text();
+    if (!res.ok) {
+      return { status: res.status, ok: false, result: null, raw };
+    }
+    const text = extractSseText(raw);
+    try {
+      return { status: res.status, ok: true, result: JSON.parse(text) as WhoamiResult, raw };
+    } catch {
+      return { status: res.status, ok: false, result: null, raw };
+    }
+  } catch (e) {
+    return {
+      status: 0,
+      ok: false,
+      result: null,
+      raw: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
 
 export interface RawSseEvent {
   eventType: string;
@@ -108,9 +263,8 @@ export function sendMessageStream(
 
   (async () => {
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+      // /chat 属 agents/ 路由，受 agents.auth 保护 —— 带上 JWT（若已设置）。
+      const headers: Record<string, string> = withAuthHeaders();
       if (conversationId) {
         headers['makers-conversation-id'] = conversationId;
       }
@@ -251,9 +405,8 @@ export async function stopAgent(conversationId?: string): Promise<boolean> {
      * but chat not actually aborting, revisit this and use a different
      * cancellation channel.
      */
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    // /stop 同属 agents/ 路由，受 agents.auth 保护 —— 带上 JWT（若已设置）。
+    const headers: Record<string, string> = withAuthHeaders();
     if (conversationId) {
       headers['makers-conversation-id'] = conversationId;
     }

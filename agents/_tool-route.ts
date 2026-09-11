@@ -2,10 +2,10 @@
  * Tool-route handler factory — private module (starts with _), not a route.
  *
  * Turns a `ToolDef` into an `onRequest` handler so that each tool can be
- * deployed as its own agent route (`agents/<tool>/index.ts`). Because
- * `edgeone.json` enables `agents.mcp`, the runtime then auto-registers every
- * such route as an individual MCP tool — which is exactly what these routes
- * are here to demonstrate.
+ * deployed as its own agent route (`agents/<tool>/index.ts`). Each such route
+ * declares `@mcp_*` tags in its JSDoc, so the runtime auto-registers it as an
+ * individual MCP tool — which is exactly what these routes are here to
+ * demonstrate.
  *
  * Why the response is SSE and not plain JSON
  * ------------------------------------------

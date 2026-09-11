@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:agents": "PATH=$PWD/.venv/bin:$PATH edgeone makers dev",
+    "auth:token": "node scripts/sign-test-jwt.js",
+    "auth:test": "node scripts/test-auth.js",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },

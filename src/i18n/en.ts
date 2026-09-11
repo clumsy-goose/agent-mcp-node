@@ -43,6 +43,50 @@ const en = {
   "panel.label": "Project info panel",
   "panel.tab.routes": "Agent Routes",
   "panel.tab.mcp": "MCP Config",
+  "panel.tab.auth": "Auth Check",
+
+  // Auth panel (agents.auth / JWT)
+  "auth.title": "Agent Auth Verification",
+  "auth.subtitle": "Once edgeone.json declares agents.auth, the edge controller verifies the JWT for every agents/* route and injects the verified identity as the makers-user-id header. This panel calls the /whoami probe so you can see exactly what identity the runtime resolved.",
+
+  "auth.env.local": "Local dev",
+  "auth.env.localHint": "There is no edge controller locally, so JWTs are never verified — pasting a token has no effect. Use \"Simulate controller\" to inject edge-inner-user-id directly, which is equivalent to the post-verification state.",
+  "auth.env.remote": "Deployed",
+  "auth.env.remoteHint": "Requests pass through the edge controller first. Once a JWT is saved below, every agent route request carries the Authorization header.",
+
+  "auth.token.title": "JWT Token",
+  "auth.token.set": "Set",
+  "auth.token.unset": "Not set",
+  "auth.token.hint": "In a real product the token is issued by your auth service after login. This template has no login flow, so sign a test token with npm run auth:token and paste it here (stored in localStorage).",
+  "auth.token.placeholder": "Paste a JWT, e.g. eyJhbGciOi....eyJzdWIi....signature",
+  "auth.token.save": "Save",
+  "auth.token.clear": "Clear",
+  "auth.token.expired": "expired",
+  "auth.token.unparsable": "Could not decode this token's payload — it may not be a valid JWT (expected header.payload.signature).",
+
+  "auth.probe.title": "Identity probe",
+  "auth.probe.hint": "Calls /whoami to echo back the platform identity the runtime resolved, and checks two security assertions: a forged makers-user-id must be dropped, and the internal channel header must never leak to business code.",
+  "auth.probe.run": "Call /whoami",
+  "auth.probe.simulate": "Simulate controller",
+  "auth.probe.simulateTitle": "Injects edge-inner-user-id directly to mimic a successful verification (only meaningful locally)",
+  "auth.probe.forge": "Forge identity (security test)",
+  "auth.probe.forgeTitle": "Sends a forged makers-user-id header to verify the runtime drops it",
+  "auth.probe.loading": "Requesting...",
+  "auth.probe.netError": "Request failed",
+  "auth.probe.empty": "(empty response)",
+
+  "auth.scenario.plain": "current token only",
+  "auth.scenario.simulated": "simulated verification",
+  "auth.scenario.forged": "forged makers-user-id",
+
+  "auth.field.authenticated": "Authenticated",
+  "auth.field.authHeader": "Authorization received",
+
+  "auth.alert.forgeBlocked": "Forgery blocked: the client-supplied makers-user-id was dropped by the runtime and never treated as an identity.",
+  "auth.alert.forgeLeaked": "Critical flaw: the forged makers-user-id was accepted as a real identity — anyone could impersonate any user this way.",
+  "auth.alert.innerLeaked": "Security issue: the internal header edge-inner-user-id leaked into business code, which should never see that field.",
+
+  "auth.note": "Full CLI verification: npm run auth:test (local) or npm run auth:test <deployed-url>. The deployed mode additionally verifies signature checking, expiry rejection, tamper rejection and unregistered-key rejection.",
 
   // Agent routes section
   "routes.title": "Agent Routes",
@@ -60,6 +104,8 @@ const en = {
   "route.chat.desc": "Creates the OpenAI Agent with 4 custom tools plus EdgeOne Store session memory, then streams text_delta and tool_called events over SSE.",
   "route.stop.title": "Abort the active run",
   "route.stop.desc": "Calls abortActiveRun for the given conversation_id, interrupting the in-flight Agent run and releasing the upstream LLM connection.",
+  "route.whoami.title": "Auth identity probe",
+  "route.whoami.desc": "Echoes the platform identity (makers-user-id) resolved by the runtime so the agents.auth chain can be verified, and asserts that forged identity headers were dropped and the internal channel header did not leak.",
   "route.getWeather.title": "Get city weather",
   "route.getWeather.desc": "Exposes the get_weather tool standalone, returning condition, temperature range and wind for a city.",
   "route.getClothingAdvice.title": "Generate clothing advice",

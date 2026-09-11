@@ -558,7 +558,11 @@ function AppInner() {
         </div>
 
         <div className={styles.codePanel}>
-          <InfoPanel tab={rightPanelMode} onTabChange={setRightPanelMode} />
+          <InfoPanel
+            tab={rightPanelMode}
+            onTabChange={setRightPanelMode}
+            conversationId={activeConversationId}
+          />
         </div>
       </div>
     </div>

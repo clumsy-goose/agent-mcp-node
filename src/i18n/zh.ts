@@ -43,6 +43,50 @@ const zh = {
   "panel.label": "项目信息面板",
   "panel.tab.routes": "Agent 路由",
   "panel.tab.mcp": "MCP 配置",
+  "panel.tab.auth": "鉴权验证",
+
+  // Auth panel (agents.auth / JWT)
+  "auth.title": "Agent 鉴权验证",
+  "auth.subtitle": "edgeone.json 配置 agents.auth 后，agents/* 路由由中控验签 JWT，验通后把身份注入为 makers-user-id 请求头。本面板调用 /whoami 探针，直接观察 runtime 解析出的身份。",
+
+  "auth.env.local": "本地 dev",
+  "auth.env.localHint": "本地没有中控，不会验签 JWT —— 粘贴 token 不产生效果。请用「模拟中控」按钮直接注入 edge-inner-user-id，等价于中控验签完成后的状态。",
+  "auth.env.remote": "线上环境",
+  "auth.env.remoteHint": "请求会先经中控验签。填入下方 JWT 后，所有 agent 路由请求都会带上 Authorization 头。",
+
+  "auth.token.title": "JWT Token",
+  "auth.token.set": "已设置",
+  "auth.token.unset": "未设置",
+  "auth.token.hint": "真实产品中 token 由认证服务在用户登录后下发。此模板无登录流程，可用 npm run auth:token 签一个测试 token 后粘贴到这里（保存在 localStorage）。",
+  "auth.token.placeholder": "粘贴 JWT，形如 eyJhbGciOi....eyJzdWIi....签名",
+  "auth.token.save": "保存",
+  "auth.token.clear": "清除",
+  "auth.token.expired": "已过期",
+  "auth.token.unparsable": "无法解析该 token 的 payload —— 可能不是合法的 JWT（需为 header.payload.signature 三段式）。",
+
+  "auth.probe.title": "身份探针",
+  "auth.probe.hint": "调用 /whoami，回显 runtime 解析出的平台身份，并校验两条安全断言：伪造的 makers-user-id 必须被丢弃、内部信道名不得泄漏到业务层。",
+  "auth.probe.run": "调用 /whoami",
+  "auth.probe.simulate": "模拟中控注入身份",
+  "auth.probe.simulateTitle": "直接注入 edge-inner-user-id，模拟中控验签通过后的状态（仅本地有意义）",
+  "auth.probe.forge": "伪造身份（安全测试）",
+  "auth.probe.forgeTitle": "直接伪造 makers-user-id 请求头，验证 runtime 是否将其丢弃",
+  "auth.probe.loading": "请求中...",
+  "auth.probe.netError": "请求失败",
+  "auth.probe.empty": "（响应为空）",
+
+  "auth.scenario.plain": "仅带当前 token",
+  "auth.scenario.simulated": "模拟中控已验签",
+  "auth.scenario.forged": "伪造 makers-user-id",
+
+  "auth.field.authenticated": "是否已鉴权",
+  "auth.field.authHeader": "收到 Authorization 头",
+
+  "auth.alert.forgeBlocked": "防伪造生效：客户端传入的 makers-user-id 已被 runtime 丢弃，未被当作身份使用。",
+  "auth.alert.forgeLeaked": "严重缺陷：伪造的 makers-user-id 被当成了真实身份 —— 任何人都可借此冒充任意用户。",
+  "auth.alert.innerLeaked": "安全问题：内部信道头 edge-inner-user-id 泄漏到了业务层，业务不应感知该字段。",
+
+  "auth.note": "命令行完整验证：npm run auth:test（本地）/ npm run auth:test <线上地址>。线上模式会额外验证签名校验、过期拒绝、篡改拒绝与未登记密钥拒绝。",
 
   // Agent routes section
   "routes.title": "Agent 路由",
@@ -60,6 +104,8 @@ const zh = {
   "route.chat.desc": "创建 OpenAI Agent 并注入 4 个自定义工具与 EdgeOne Store 会话记忆，通过 SSE 逐字推送 text_delta 与 tool_called 事件。",
   "route.stop.title": "中止当前运行",
   "route.stop.desc": "根据 conversation_id 触发 abortActiveRun，中断正在进行的 Agent 运行并释放上游 LLM 连接。",
+  "route.whoami.title": "鉴权身份探针",
+  "route.whoami.desc": "回显 runtime 解析出的平台身份（makers-user-id），用于验证 agents.auth 鉴权链路；同时断言伪造的身份头已被丢弃、内部信道名未泄漏。",
   "route.getWeather.title": "查询城市天气",
   "route.getWeather.desc": "独立暴露 get_weather 工具，返回指定城市的天气状况、温度区间与风力。",
   "route.getClothingAdvice.title": "生成穿衣建议",

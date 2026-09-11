@@ -56,6 +56,18 @@ const ROUTES: RouteItem[] = [
   },
   {
     method: 'POST',
+    path: '/whoami',
+    file: 'agents/whoami/index.ts',
+    mcpTool: 'whoami',
+    params: 'echo (optional)',
+    streaming: true,
+    group: 'core',
+    icon: '🔐',
+    titleKey: 'route.whoami.title',
+    descKey: 'route.whoami.desc',
+  },
+  {
+    method: 'POST',
     path: '/get_weather',
     file: 'agents/get_weather/index.ts',
     mcpTool: 'get_weather',

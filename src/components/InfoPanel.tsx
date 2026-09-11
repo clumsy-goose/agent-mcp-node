@@ -1,21 +1,25 @@
 import { useT, MessageKeys } from '../i18n';
 import AgentRoutes from './AgentRoutes';
 import McpPanel from './McpPanel';
+import AuthPanel from './AuthPanel';
 import styles from './InfoPanel.module.css';
 
-export type InfoTab = 'routes' | 'mcp';
+export type InfoTab = 'routes' | 'mcp' | 'auth';
 
 interface Props {
   tab: InfoTab;
   onTabChange: (tab: InfoTab) => void;
+  /** 当前活跃会话 ID，透传给 AuthPanel 作为 makers-conversation-id（与 /chat 同源）。 */
+  conversationId: string;
 }
 
 const TABS: { id: InfoTab; labelKey: MessageKeys; icon: string }[] = [
   { id: 'routes', labelKey: 'panel.tab.routes', icon: '🧭' },
   { id: 'mcp',    labelKey: 'panel.tab.mcp',    icon: '🔌' },
+  { id: 'auth',   labelKey: 'panel.tab.auth',   icon: '🔐' },
 ];
 
-export default function InfoPanel({ tab, onTabChange }: Props) {
+export default function InfoPanel({ tab, onTabChange, conversationId }: Props) {
   const { t } = useT();
 
   return (
@@ -48,7 +52,9 @@ export default function InfoPanel({ tab, onTabChange }: Props) {
         aria-labelledby={`info-tab-${tab}`}
         tabIndex={0}
       >
-        {tab === 'routes' ? <AgentRoutes /> : <McpPanel />}
+        {tab === 'routes' && <AgentRoutes />}
+        {tab === 'mcp' && <McpPanel />}
+        {tab === 'auth' && <AuthPanel conversationId={conversationId} />}
       </div>
     </div>
   );

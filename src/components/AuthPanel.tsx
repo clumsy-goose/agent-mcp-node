@@ -177,6 +177,13 @@ export default function AuthPanel({ conversationId }: Props) {
   const [genSub, setGenSub] = useState('corbinlin');
   const [genExp, setGenExp] = useState(() => toDatetimeLocal(new Date(Date.now() + 3600_000)));
   const [genError, setGenError] = useState<string | null>(null);
+  /** 最近一次生成的 token，用于在生成器下方回显。 */
+  const [genResult, setGenResult] = useState<{
+    token: string;
+    sub: string;
+    exp: number;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // token 变更后清掉旧探测结果，避免读者把上一次的结论套到新 token 上。
   useEffect(() => {
@@ -192,11 +199,16 @@ export default function AuthPanel({ conversationId }: Props) {
     setAuthToken('');
     setToken('');
     setSaved('');
+    setGenResult(null);
+    setCopied(false);
   }, []);
 
   // 用私钥本地签发 JWT，并直接填入上方 token 框（保留粘贴能力）。
   const handleGenerate = useCallback(async () => {
     setGenError(null);
+    // 先清掉上一次结果，避免失败时仍停留在旧 token 上造成误读。
+    setGenResult(null);
+    setCopied(false);
     try {
       const key = genKey.trim();
       if (!key) throw new Error(t('auth.gen.errorEmptyKey'));
@@ -217,10 +229,23 @@ export default function AuthPanel({ conversationId }: Props) {
       setToken(jwt);
       setAuthToken(jwt);
       setSaved(jwt);
+      setGenResult({ token: jwt, sub, exp });
     } catch (e) {
       setGenError(e instanceof Error ? e.message : String(e));
     }
   }, [genKey, genSub, genExp, genAlg, t]);
+
+  // 复制生成的 token（clipboard 仅在安全上下文可用，失败静默处理）。
+  const handleCopy = useCallback(async () => {
+    if (!genResult) return;
+    try {
+      await navigator.clipboard.writeText(genResult.token);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* 非安全上下文下 clipboard 不可用，忽略 */
+    }
+  }, [genResult]);
 
   const runProbe = useCallback(async (kind: ProbeKind) => {
     setProbe({ kind, loading: true, response: null });
@@ -402,6 +427,36 @@ export default function AuthPanel({ conversationId }: Props) {
           <p className={styles.genError}>
             {t('auth.gen.error')}{genError}
           </p>
+        )}
+
+        {genResult && !genError && (
+          <div className={styles.result}>
+            <div className={styles.resultHead}>
+              <span className={styles.statusOk}>{t('auth.gen.success')}</span>
+              <button
+                type="button"
+                className={styles.btnGhost}
+                onClick={handleCopy}
+              >
+                {copied ? t('auth.gen.copied') : t('auth.gen.copy')}
+              </button>
+            </div>
+
+            <pre className={styles.rawBox}>{genResult.token}</pre>
+
+            <dl className={styles.claims}>
+              <div className={styles.claimRow}>
+                <dt>sub</dt>
+                <dd><code>{genResult.sub}</code></dd>
+              </div>
+              <div className={styles.claimRow}>
+                <dt>exp</dt>
+                <dd><code>{new Date(genResult.exp * 1000).toLocaleString()}</code></dd>
+              </div>
+            </dl>
+
+            <p className={styles.blockHint}>{t('auth.gen.filled')}</p>
+          </div>
         )}
       </div>
 
